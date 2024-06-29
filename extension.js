@@ -1,36 +1,82 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 const vscode = require('vscode');
-
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
+const fs = require('fs');
+const path = require('path');
 
 /**
  * @param {vscode.ExtensionContext} context
  */
 function activate(context) {
+    console.log('Congratulations, your extension "copykit" is now active!');
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "copykit" is now active!');
+    let disposable = vscode.commands.registerCommand('copykit.copyFileOrFolder', function (uri) {
+        console.log('Command copykit.copyFileOrFolder triggered');
+        
+        if (!uri || !uri.fsPath) {
+            console.error('No valid URI provided');
+            vscode.window.showErrorMessage('No file or folder selected');
+            return;
+        }
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with  registerCommand
-	// The commandId parameter must match the command field in package.json
-	const disposable = vscode.commands.registerCommand('copykit.helloWorld', function () {
-		// The code you place here will be executed every time your command is executed
+        const sourcePath = uri.fsPath;
+        console.log(`Source path: ${sourcePath}`);
 
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from CopyKit!');
-	});
+        try {
+            let content = '';
+            if (fs.lstatSync(sourcePath).isDirectory()) {
+                console.log('Processing directory');
+                content = getDirectoryContent(sourcePath);
+            } else {
+                console.log('Processing file');
+                content = fs.readFileSync(sourcePath, 'utf8');
+            }
 
-	context.subscriptions.push(disposable);
+            const tempFile = vscode.Uri.parse(`untitled:${path.basename(sourcePath)}_copy`);
+            vscode.workspace.openTextDocument(tempFile).then(document => {
+                const edit = new vscode.WorkspaceEdit();
+                edit.insert(tempFile, new vscode.Position(0, 0), content);
+                return vscode.workspace.applyEdit(edit).then(success => {
+                    if (success) {
+                        vscode.window.showTextDocument(document);
+                        vscode.window.showInformationMessage(`Content copied to temporary file`);
+                    } else {
+                        console.error('Failed to apply edit');
+                        vscode.window.showErrorMessage('Failed to create temporary file');
+                    }
+                });
+            }, error => {
+                console.error('Failed to open text document', error);
+                vscode.window.showErrorMessage(`Failed to open document: ${error.message}`);
+            });
+        } catch (err) {
+            console.error('Error in copykit.copyFileOrFolder', err);
+            vscode.window.showErrorMessage(`Failed to copy: ${err.message}`);
+        }
+    });
+
+    context.subscriptions.push(disposable);
 }
 
-// This method is called when your extension is deactivated
+function getDirectoryContent(dirPath, indent = '') {
+    let content = '';
+    const files = fs.readdirSync(dirPath);
+    for (const file of files) {
+        const filePath = path.join(dirPath, file);
+        const stats = fs.statSync(filePath);
+        if (stats.isDirectory()) {
+            content += `${indent}${file}/\n`;
+            content += getDirectoryContent(filePath, indent + '  ');
+        } else {
+            content += `${indent}${file}\n`;
+            content += `${indent}Content:\n`;
+            content += `${indent}${fs.readFileSync(filePath, 'utf8')}\n\n`;
+        }
+    }
+    return content;
+}
+
 function deactivate() {}
 
 module.exports = {
-	activate,
-	deactivate
+    activate,
+    deactivate
 }
