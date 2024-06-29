@@ -9,19 +9,30 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onCommand:copykit.copyFileOrFolder",
+    "onCommand:copykit.copyToClipboard"
+  ],
   "main": "./extension.js",
   "contributes": {
     "commands": [
       {
         "command": "copykit.copyFileOrFolder",
-        "title": "CopyKit: Copy File or Folder"
+        "title": "CopyKit: Copy to Temp File"
+      },
+      {
+        "command": "copykit.copyToClipboard",
+        "title": "CopyKit: Copy to Clipboard"
       }
     ],
     "menus": {
       "explorer/context": [
         {
           "command": "copykit.copyFileOrFolder",
+          "group": "copykit"
+        },
+        {
+          "command": "copykit.copyToClipboard",
           "group": "copykit"
         }
       ]
@@ -30,15 +41,17 @@
   "scripts": {
     "lint": "eslint .",
     "pretest": "npm run lint",
-    "test": "vscode-test"
+    "test": "node ./test/runTest.js"
   },
   "devDependencies": {
     "@types/vscode": "^1.90.0",
-    "@types/mocha": "^10.0.7",
+    "@types/glob": "^8.1.0",
+    "@types/mocha": "^10.0.6",
     "@types/node": "20.x",
-    "eslint": "^8.57.0",
-    "typescript": "^5.4.5",
-    "@vscode/test-cli": "^0.0.9",
-    "@vscode/test-electron": "^2.4.0"
+    "eslint": "^8.56.0",
+    "glob": "^10.3.10",
+    "mocha": "^10.2.0",
+    "typescript": "^5.3.3",
+    "@vscode/test-electron": "^2.3.9"
   }
 }
