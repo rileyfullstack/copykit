@@ -9,6 +9,10 @@
   "categories": [
     "Other"
   ],
+  "activationEvents": [
+    "onCommand:copykit.copyFileOrFolder",
+    "onCommand:copykit.copyToClipboard"
+  ],
   "main": "./extension.js",
   "contributes": {
     "configuration": {
@@ -118,5 +122,9 @@
   "dependencies": {
     "ignore": "^5.2.4",
     "micromatch": "^4.0.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rileyfullstack/copykit"
   }
 }
