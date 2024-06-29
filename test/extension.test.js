@@ -1,15 +1,27 @@
-const assert = require('assert');
-
-// You can import and use all API from the 'vscode' module
-// as well as import your extension to test it
 const vscode = require('vscode');
-// const myExtension = require('../extension');
+const fs = require('fs');
+const path = require('path');
 
-suite('Extension Test Suite', () => {
-	vscode.window.showInformationMessage('Start all tests.');
+/**
+ * @param {vscode.ExtensionContext} context
+ */
+function activate(context) {
+    console.log('Congratulations, your extension "copykit" is now active!');
 
-	test('Sample test', () => {
-		assert.strictEqual(-1, [1, 2, 3].indexOf(5));
-		assert.strictEqual(-1, [1, 2, 3].indexOf(0));
-	});
-});
+    let disposable = vscode.commands.registerCommand('copykit.copyFileOrFolder', function (uri) {
+        if (uri && uri.fsPath) {
+            const sourcePath = uri.fsPath;
+            vscode.window.showInformationMessage(`Copying: ${sourcePath}`);
+            // TODO: Implement copying logic here
+        }
+    });
+
+    context.subscriptions.push(disposable);
+}
+
+function deactivate() {}
+
+module.exports = {
+    activate,
+    deactivate
+}
