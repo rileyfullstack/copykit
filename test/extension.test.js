@@ -11,8 +11,23 @@ function activate(context) {
     let disposable = vscode.commands.registerCommand('copykit.copyFileOrFolder', function (uri) {
         if (uri && uri.fsPath) {
             const sourcePath = uri.fsPath;
-            vscode.window.showInformationMessage(`Copying: ${sourcePath}`);
-            // TODO: Implement copying logic here
+            vscode.window.showInputBox({
+                prompt: "Enter destination path",
+                value: sourcePath
+            }).then(destinationPath => {
+                if (destinationPath) {
+                    try {
+                        if (fs.lstatSync(sourcePath).isDirectory()) {
+                            fs.cpSync(sourcePath, destinationPath, { recursive: true });
+                        } else {
+                            fs.copyFileSync(sourcePath, destinationPath);
+                        }
+                        vscode.window.showInformationMessage(`Successfully copied to ${destinationPath}`);
+                    } catch (err) {
+                        vscode.window.showErrorMessage(`Failed to copy: ${err.message}`);
+                    }
+                }
+            });
         }
     });
 
