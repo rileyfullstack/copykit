@@ -9,12 +9,71 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [
-    "onCommand:copykit.copyFileOrFolder",
-    "onCommand:copykit.copyToClipboard"
-  ],
   "main": "./extension.js",
   "contributes": {
+    "configuration": {
+      "title": "CopyKit",
+      "properties": {
+        "copykit.sizeLimit": {
+          "type": "number",
+          "default": 10,
+          "description": "Size limit in MB for files/folders to copy without warning."
+        },
+        "copykit.enableCopyToTempFile": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable 'Copy to Temp File' in the context menu"
+        },
+        "copykit.enableCopyToClipboard": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable 'Copy to Clipboard' in the context menu"
+        },
+        "copykit.includeFilePath": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include file path at the beginning of each copied file"
+        },
+        "copykit.fileTypeFiltering": {
+          "type": "object",
+          "default": {
+            "mode": "includeAll",
+            "include": [],
+            "exclude": ["node_modules", ".git"]
+          },
+          "description": "File type filtering settings",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": ["includeAll", "includeSpecified", "excludeSpecified"],
+              "default": "includeAll",
+              "description": "Filtering mode: include all, include only specified, or exclude specified"
+            },
+            "include": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": [],
+              "description": "File types to include (e.g., ['js', 'ts', 'json'])"
+            },
+            "exclude": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": ["node_modules", ".git"],
+              "description": "File types or patterns to exclude (e.g., ['exe', 'dll', 'node_modules'])"
+            }
+          }
+        },
+        "copykit.respectGitignore": {
+          "type": "boolean",
+          "default": true,
+          "description": "Respect .gitignore rules when copying"
+        }
+      }
+    },
     "commands": [
       {
         "command": "copykit.copyFileOrFolder",
@@ -29,11 +88,13 @@
       "explorer/context": [
         {
           "command": "copykit.copyFileOrFolder",
-          "group": "copykit"
+          "group": "copykit@1",
+          "when": "config.copykit.enableCopyToTempFile && explorerViewletVisible && filesExplorerFocus && !explorerResourceIsRoot"
         },
         {
           "command": "copykit.copyToClipboard",
-          "group": "copykit"
+          "group": "copykit@2",
+          "when": "config.copykit.enableCopyToClipboard && explorerViewletVisible && filesExplorerFocus && !explorerResourceIsRoot"
         }
       ]
     }
@@ -53,5 +114,9 @@
     "mocha": "^10.2.0",
     "typescript": "^5.3.3",
     "@vscode/test-electron": "^2.3.9"
+  },
+  "dependencies": {
+    "ignore": "^5.2.4",
+    "micromatch": "^4.0.5"
   }
 }
