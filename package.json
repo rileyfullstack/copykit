@@ -1,14 +1,29 @@
 {
   "name": "copykit",
   "displayName": "CopyKit",
-  "description": "Easily copy files and folders with right-click actions",
-  "version": "0.0.1",
+  "description": "Easily copy files and folders with advanced filtering and temporary file management",
+  "version": "1.0.0",
+  "publisher": "RileyFullStack",
   "engines": {
     "vscode": "^1.90.0"
   },
   "categories": [
-    "Other"
+    "Other",
+    "Snippets",
+    "Formatters"
   ],
+  "keywords": [
+    "copy",
+    "clipboard",
+    "file management",
+    "gitignore",
+    "filtering"
+  ],
+  "icon": "images/icon.png",
+  "galleryBanner": {
+    "color": "#C80000",
+    "theme": "dark"
+  },
   "activationEvents": [
     "onCommand:copykit.copyFileOrFolder",
     "onCommand:copykit.copyToClipboard",
@@ -142,5 +157,14 @@
   "dependencies": {
     "ignore": "^5.2.4",
     "micromatch": "^4.0.5"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RileyFullStack/copykit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/RileyFullStack/copykit/issues"
+  },
+  "homepage": "https://github.com/RileyFullStack/copykit/blob/main/README.md",
+  "license": "MIT"
 }
