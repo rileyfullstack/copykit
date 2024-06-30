@@ -4,36 +4,44 @@ const path = require('path');
 const { default: ignore } = require('ignore');
 const micromatch = require('micromatch');
 
-/**
- * Activates the extension
- * @param {vscode.ExtensionContext} context
- */
+let tempFileUri = null;
+
 function activate(context) {
     console.log('Congratulations, your extension "copykit" is now active!');
 
-    // Register the command to copy to a temporary file
     let copyToTempFile = vscode.commands.registerCommand('copykit.copyFileOrFolder', function (uri, uris) {
         if (vscode.workspace.getConfiguration('copykit').get('enableCopyToTempFile')) {
             handleCopyMultiple(uris || [uri], copyContentToTempFile);
         }
     });
 
-    // Register the command to copy to clipboard
+    let copyToNewTempFile = vscode.commands.registerCommand('copykit.copyToNewTempFile', function (uri, uris) {
+        if (vscode.workspace.getConfiguration('copykit').get('enableCopyToTempFile')) {
+            vscode.window.showWarningMessage('This will replace the contents of the existing temp file. Continue?', 'Yes', 'No')
+                .then(selection => {
+                    if (selection === 'Yes') {
+                        tempFileUri = null;
+                        handleCopyMultiple(uris || [uri], copyContentToTempFile);
+                    }
+                });
+        }
+    });
+
+    let addToExistingTempFile = vscode.commands.registerCommand('copykit.addToExistingTempFile', function (uri, uris) {
+        if (vscode.workspace.getConfiguration('copykit').get('enableCopyToTempFile')) {
+            handleCopyMultiple(uris || [uri], addContentToExistingTempFile);
+        }
+    });
+
     let copyToClipboard = vscode.commands.registerCommand('copykit.copyToClipboard', function (uri, uris) {
         if (vscode.workspace.getConfiguration('copykit').get('enableCopyToClipboard')) {
             handleCopyMultiple(uris || [uri], copyContentToClipboard);
         }
     });
 
-    // Add the commands to the extension context
-    context.subscriptions.push(copyToTempFile, copyToClipboard);
+    context.subscriptions.push(copyToTempFile, copyToNewTempFile, addToExistingTempFile, copyToClipboard);
 }
 
-/**
- * Handles copying of multiple files
- * @param {vscode.Uri[]} uris - Array of file/folder URIs to copy
- * @param {Function} copyFunction - Function to call for copying (either to temp file or clipboard)
- */
 async function handleCopyMultiple(uris, copyFunction) {
     if (!uris || uris.length === 0) return;
 
@@ -41,7 +49,6 @@ async function handleCopyMultiple(uris, copyFunction) {
     let contents = [];
     let excludedFiles = [];
 
-    // Process each selected file/folder
     for (const uri of uris) {
         if (uri && uri.fsPath) {
             try {
@@ -60,7 +67,6 @@ async function handleCopyMultiple(uris, copyFunction) {
         }
     }
 
-    // Check if total size exceeds the limit
     const sizeLimit = getSizeLimit();
     if (totalSize > sizeLimit) {
         const shouldProceed = await vscode.window.showWarningMessage(
@@ -72,36 +78,31 @@ async function handleCopyMultiple(uris, copyFunction) {
         }
     }
 
-    // Handle case where all files were excluded
     if (contents.length === 0) {
         vscode.window.showWarningMessage('All selected files were excluded based on your settings.');
         return;
     }
 
-    // Inform user about excluded files
     if (excludedFiles.length > 0) {
         vscode.window.showInformationMessage(`The following files were excluded: ${excludedFiles.join(', ')}`);
     }
 
-    // Perform the copy operation
     await copyFunction(contents);
 }
 
-/**
- * Copies content to a temporary file
- * @param {Array<{path: string, content: string}>} contents - Array of file contents to copy
- */
 async function copyContentToTempFile(contents) {
-    const tempFile = vscode.Uri.parse(`untitled:CopyKit_multiple_files_copy`);
-    const document = await vscode.workspace.openTextDocument(tempFile);
+    if (!tempFileUri) {
+        tempFileUri = vscode.Uri.parse(`untitled:CopyKit_temp_file.txt`);
+    }
+    const document = await vscode.workspace.openTextDocument(tempFileUri);
     const edit = new vscode.WorkspaceEdit();
     const includeFilePath = vscode.workspace.getConfiguration('copykit').get('includeFilePath');
     
     let fullContent = contents.map(item => 
         (includeFilePath ? `File: ${item.path}\n\n` : '') + `${item.content}\n\n`
-    ).join('---\n\n');
+    ).join('--------------------\n\n');
     
-    edit.insert(tempFile, new vscode.Position(0, 0), fullContent);
+    edit.replace(tempFileUri, new vscode.Range(0, 0, document.lineCount, 0), fullContent);
     const success = await vscode.workspace.applyEdit(edit);
     if (success) {
         await vscode.window.showTextDocument(document);
@@ -111,25 +112,39 @@ async function copyContentToTempFile(contents) {
     }
 }
 
-/**
- * Copies content to the clipboard
- * @param {Array<{path: string, content: string}>} contents - Array of file contents to copy
- */
+async function addContentToExistingTempFile(contents) {
+    if (!tempFileUri) {
+        vscode.window.showErrorMessage('No existing temporary file. Creating a new one.');
+        return copyContentToTempFile(contents);
+    }
+    const document = await vscode.workspace.openTextDocument(tempFileUri);
+    const edit = new vscode.WorkspaceEdit();
+    const includeFilePath = vscode.workspace.getConfiguration('copykit').get('includeFilePath');
+    
+    let newContent = '\n\n--------------------\n\n' + contents.map(item => 
+        (includeFilePath ? `File: ${item.path}\n\n` : '') + `${item.content}\n\n`
+    ).join('--------------------\n\n');
+    
+    edit.insert(tempFileUri, new vscode.Position(document.lineCount, 0), newContent);
+    const success = await vscode.workspace.applyEdit(edit);
+    if (success) {
+        await vscode.window.showTextDocument(document);
+        vscode.window.showInformationMessage(`Content added to existing temporary file`);
+    } else {
+        vscode.window.showErrorMessage('Failed to add content to temporary file');
+    }
+}
+
 async function copyContentToClipboard(contents) {
     const includeFilePath = vscode.workspace.getConfiguration('copykit').get('includeFilePath');
     let fullContent = contents.map(item => 
         (includeFilePath ? `File: ${item.path}\n\n` : '') + `${item.content}\n\n`
-    ).join('---\n\n');
+    ).join('--------------------\n\n');
     
     await vscode.env.clipboard.writeText(fullContent);
     vscode.window.showInformationMessage(`Content copied to clipboard`);
 }
 
-/**
- * Calculates the total size of a file or directory
- * @param {string} sourcePath - Path to the file or directory
- * @returns {Promise<number>} Total size in bytes
- */
 async function getSize(sourcePath) {
     const stats = await fs.stat(sourcePath);
     if (stats.isDirectory()) {
@@ -145,11 +160,6 @@ async function getSize(sourcePath) {
     }
 }
 
-/**
- * Gets filtered content of a file or directory
- * @param {string} sourcePath - Path to the file or directory
- * @returns {Promise<string>} Filtered content
- */
 async function getFilteredContent(sourcePath) {
     const stats = await fs.stat(sourcePath);
     if (stats.isDirectory()) {
@@ -162,12 +172,6 @@ async function getFilteredContent(sourcePath) {
     }
 }
 
-/**
- * Gets filtered content of a directory
- * @param {string} dirPath - Path to the directory
- * @param {string} indent - Indentation for nested directories
- * @returns {Promise<string>} Filtered directory content
- */
 async function getFilteredDirectoryContent(dirPath, indent = '') {
     let content = '';
     const files = await fs.readdir(dirPath);
@@ -190,12 +194,6 @@ async function getFilteredDirectoryContent(dirPath, indent = '') {
     return content;
 }
 
-/**
- * Determines if a file should be included based on filtering rules
- * @param {string} filePath - Path to the file
- * @param {object} gitignore - Gitignore rules
- * @returns {boolean} Whether the file should be included
- */
 function shouldIncludeFile(filePath, gitignore) {
     const config = vscode.workspace.getConfiguration('copykit');
     const filteringConfig = config.get('fileTypeFiltering');
@@ -203,13 +201,12 @@ function shouldIncludeFile(filePath, gitignore) {
 
     const relativePath = path.relative(vscode.workspace.rootPath, filePath);
 
-    // Check gitignore
     if (respectGitignore && gitignore && gitignore.ignores(relativePath)) {
         return false;
     }
 
     const fileName = path.basename(filePath);
-    const fileExt = path.extname(filePath).slice(1); // Remove the dot
+    const fileExt = path.extname(filePath).slice(1);
 
     switch (filteringConfig.mode) {
         case 'includeSpecified':
@@ -222,29 +219,19 @@ function shouldIncludeFile(filePath, gitignore) {
     }
 }
 
-/**
- * Gets gitignore rules for a directory
- * @param {string} dirPath - Path to the directory
- * @returns {Promise<object|null>} Gitignore rules object or null if not found
- */
 async function getGitignoreRules(dirPath) {
     const gitignorePath = path.join(dirPath, '.gitignore');
     try {
         const gitignoreContent = await fs.readFile(gitignorePath, 'utf8');
         return ignore().add(gitignoreContent);
     } catch (error) {
-        // .gitignore not found, that's okay
         return null;
     }
 }
 
-/**
- * Gets the configured size limit for copying
- * @returns {number} Size limit in bytes
- */
 function getSizeLimit() {
     const config = vscode.workspace.getConfiguration('copykit');
-    return config.get('sizeLimit', 10) * 1024 * 1024; // Convert MB to bytes
+    return config.get('sizeLimit', 10) * 1024 * 1024;
 }
 
 function deactivate() {}

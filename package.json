@@ -9,10 +9,6 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [
-    "onCommand:copykit.copyFileOrFolder",
-    "onCommand:copykit.copyToClipboard"
-  ],
   "main": "./extension.js",
   "contributes": {
     "configuration": {
@@ -86,6 +82,14 @@
       {
         "command": "copykit.copyToClipboard",
         "title": "CopyKit: Copy to Clipboard"
+      },
+      {
+        "command": "copykit.copyToNewTempFile",
+        "title": "CopyKit: Copy to New Temp File"
+      },
+      {
+        "command": "copykit.addToExistingTempFile",
+        "title": "CopyKit: Add to Existing Temp File"
       }
     ],
     "menus": {
@@ -96,8 +100,18 @@
           "when": "config.copykit.enableCopyToTempFile && explorerViewletVisible && filesExplorerFocus && !explorerResourceIsRoot"
         },
         {
-          "command": "copykit.copyToClipboard",
+          "command": "copykit.copyToNewTempFile",
           "group": "copykit@2",
+          "when": "config.copykit.enableCopyToTempFile && explorerViewletVisible && filesExplorerFocus && !explorerResourceIsRoot"
+        },
+        {
+          "command": "copykit.addToExistingTempFile",
+          "group": "copykit@3",
+          "when": "config.copykit.enableCopyToTempFile && explorerViewletVisible && filesExplorerFocus && !explorerResourceIsRoot"
+        },
+        {
+          "command": "copykit.copyToClipboard",
+          "group": "copykit@4",
           "when": "config.copykit.enableCopyToClipboard && explorerViewletVisible && filesExplorerFocus && !explorerResourceIsRoot"
         }
       ]
@@ -122,9 +136,5 @@
   "dependencies": {
     "ignore": "^5.2.4",
     "micromatch": "^4.0.5"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/rileyfullstack/copykit"
   }
 }
