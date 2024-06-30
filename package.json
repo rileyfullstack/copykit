@@ -9,6 +9,12 @@
   "categories": [
     "Other"
   ],
+  "activationEvents": [
+    "onCommand:copykit.copyFileOrFolder",
+    "onCommand:copykit.copyToClipboard",
+    "onCommand:copykit.copyToNewTempFile",
+    "onCommand:copykit.addToExistingTempFile"
+  ],
   "main": "./extension.js",
   "contributes": {
     "configuration": {
@@ -97,17 +103,17 @@
         {
           "command": "copykit.copyFileOrFolder",
           "group": "copykit@1",
-          "when": "config.copykit.enableCopyToTempFile && explorerViewletVisible && filesExplorerFocus && !explorerResourceIsRoot"
+          "when": "config.copykit.enableCopyToTempFile && explorerViewletVisible && filesExplorerFocus && !explorerResourceIsRoot && !copykit.tempFileExists"
         },
         {
           "command": "copykit.copyToNewTempFile",
           "group": "copykit@2",
-          "when": "config.copykit.enableCopyToTempFile && explorerViewletVisible && filesExplorerFocus && !explorerResourceIsRoot"
+          "when": "config.copykit.enableCopyToTempFile && explorerViewletVisible && filesExplorerFocus && !explorerResourceIsRoot && copykit.tempFileExists"
         },
         {
           "command": "copykit.addToExistingTempFile",
           "group": "copykit@3",
-          "when": "config.copykit.enableCopyToTempFile && explorerViewletVisible && filesExplorerFocus && !explorerResourceIsRoot"
+          "when": "config.copykit.enableCopyToTempFile && explorerViewletVisible && filesExplorerFocus && !explorerResourceIsRoot && copykit.tempFileExists"
         },
         {
           "command": "copykit.copyToClipboard",

@@ -9,9 +9,15 @@ let tempFileUri = null;
 function activate(context) {
     console.log('Congratulations, your extension "copykit" is now active!');
 
+    // Function to update command visibility
+    function updateCommandVisibility() {
+        vscode.commands.executeCommand('setContext', 'copykit.tempFileExists', !!tempFileUri);
+    }
+
     let copyToTempFile = vscode.commands.registerCommand('copykit.copyFileOrFolder', function (uri, uris) {
         if (vscode.workspace.getConfiguration('copykit').get('enableCopyToTempFile')) {
             handleCopyMultiple(uris || [uri], copyContentToTempFile);
+            updateCommandVisibility();
         }
     });
 
@@ -22,6 +28,7 @@ function activate(context) {
                     if (selection === 'Yes') {
                         tempFileUri = null;
                         handleCopyMultiple(uris || [uri], copyContentToTempFile);
+                        updateCommandVisibility();
                     }
                 });
         }
@@ -40,6 +47,9 @@ function activate(context) {
     });
 
     context.subscriptions.push(copyToTempFile, copyToNewTempFile, addToExistingTempFile, copyToClipboard);
+
+    // Initial update of command visibility
+    updateCommandVisibility();
 }
 
 async function handleCopyMultiple(uris, copyFunction) {
@@ -107,6 +117,7 @@ async function copyContentToTempFile(contents) {
     if (success) {
         await vscode.window.showTextDocument(document);
         vscode.window.showInformationMessage(`Content copied to temporary file`);
+        vscode.commands.executeCommand('setContext', 'copykit.tempFileExists', true);
     } else {
         vscode.window.showErrorMessage('Failed to create temporary file');
     }
