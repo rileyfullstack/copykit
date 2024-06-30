@@ -10,6 +10,7 @@ CopyKit is a Visual Studio Code extension that enhances your file copying capabi
 - Custom file type filtering
 - Size limit warnings for large files/folders
 - Option to include or exclude file paths in copied content
+- Dynamic context menu options based on the existence of a temporary file
 
 ## Installation
 
@@ -23,7 +24,11 @@ CopyKit is a Visual Studio Code extension that enhances your file copying capabi
 ### Copying Files or Folders
 
 1. Right-click on a file or folder in the Explorer view
-2. Select either "CopyKit: Copy to Temp File" or "CopyKit: Copy to Clipboard"
+2. Select one of the following options:
+   - "CopyKit: Copy to Temp File" (when no temp file exists)
+   - "CopyKit: Copy to New Temp File" (when a temp file exists)
+   - "CopyKit: Add to Existing Temp File" (when a temp file exists)
+   - "CopyKit: Copy to Clipboard"
 3. For multiple files, select them while holding Ctrl (or Cmd on macOS), then right-click and choose your desired CopyKit action
 
 ### Configuration
@@ -31,7 +36,7 @@ CopyKit is a Visual Studio Code extension that enhances your file copying capabi
 CopyKit can be configured through VS Code's settings. Here are the available options:
 
 - `copykit.sizeLimit`: Size limit in MB for files/folders to copy without warning (default: 10)
-- `copykit.enableCopyToTempFile`: Enable 'Copy to Temp File' in the context menu (default: true)
+- `copykit.enableCopyToTempFile`: Enable temp file operations in the context menu (default: true)
 - `copykit.enableCopyToClipboard`: Enable 'Copy to Clipboard' in the context menu (default: true)
 - `copykit.includeFilePath`: Include file path at the beginning of each copied file (default: true)
 - `copykit.respectGitignore`: Respect .gitignore rules when copying (default: true)
@@ -41,7 +46,6 @@ CopyKit can be configured through VS Code's settings. Here are the available opt
   - `exclude`: File types or patterns to exclude (e.g., ['exe', 'dll', 'node_modules'])
 
 To modify these settings:
-
 1. Go to File > Preferences > Settings (or Code > Preferences > Settings on macOS)
 2. Search for "CopyKit"
 3. Adjust the settings as needed
@@ -51,7 +55,6 @@ To modify these settings:
 ### Copying specific file types
 
 To copy only JavaScript and TypeScript files:
-
 1. Open VS Code settings
 2. Find "CopyKit: File Type Filtering"
 3. Set "Mode" to "includeSpecified"
@@ -60,7 +63,6 @@ To copy only JavaScript and TypeScript files:
 ### Excluding certain directories
 
 To exclude "node_modules" and ".git" directories:
-
 1. Open VS Code settings
 2. Find "CopyKit: File Type Filtering"
 3. Set "Mode" to "excludeSpecified"
@@ -70,6 +72,7 @@ To exclude "node_modules" and ".git" directories:
 
 - If the CopyKit options don't appear in the context menu, ensure that `copykit.enableCopyToTempFile` and `copykit.enableCopyToClipboard` are set to `true` in your settings.
 - If files aren't being copied as expected, check your file type filtering settings and ensure that `copykit.respectGitignore` is set correctly.
+- If you don't see the "Copy to New Temp File" or "Add to Existing Temp File" options, it's because no temporary file exists yet. Use "Copy to Temp File" first to create a temporary file.
 
 ## Contributing
 
